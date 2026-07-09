@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-ink text-paper font-body font-semibold px-6 py-3 rounded-anon hover:bg-pink transition-colors duration-150;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center border border-ink text-ink font-body font-semibold px-6 py-3 rounded-anon hover:border-pink hover:text-pink transition-colors duration-150;
+  }
+  .tag-sale {
+    @apply text-xs font-bold uppercase tracking-wide bg-pink text-paper px-2 py-1 rounded-anon-sm;
+  }
+  .tag-new {
+    @apply text-xs font-bold uppercase tracking-wide bg-ink text-paper px-2 py-1 rounded-anon-sm;
+  }
+  .chip {
+    @apply text-xs font-medium uppercase tracking-wide bg-ink/5 text-ink/70 px-2 py-1 rounded-anon-sm;
+  }
+  .price-strike {
+    @apply text-ink/40 line-through text-sm;
+  }
+  .section-title {
+    @apply font-display text-lg font-semibold text-ink capitalize border-b border-line pb-2.5 mb-6;
+  }
+}
+
+/* Diagonal corner ribbon used on product cards for sale/new callouts */
+.ribbon {
+  position: absolute;
+  top: 10px;
+  left: -32px;
+  width: 130px;
+  transform: rotate(-45deg);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .category-pill {
+    transition: transform 0.2s ease;
+  }
+  .category-pill:hover {
+    transform: translateY(-3px);
+  }
+}
