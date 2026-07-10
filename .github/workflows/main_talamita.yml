@@ -25,6 +25,12 @@ jobs:
 
       - name: npm install, build, and test
         working-directory: ./backend
+        env:
+          # prisma generate (run via postinstall) only reads schema.prisma — it never
+          # connects to the DB — but Prisma 7's config loader still requires this env
+          # var to resolve. The real DATABASE_URL lives in Azure App Service settings
+          # and is used at runtime by `prisma migrate deploy` in the startup command.
+          DATABASE_URL: "postgresql://user:password@localhost:5432/placeholder"
         run: |
           npm install
           npm run build --if-present
