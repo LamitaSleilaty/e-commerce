@@ -36,6 +36,14 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
+      - name: Remove node_modules before packaging
+        # actions/upload-artifact@v4 drops symlinks and empty directories, which
+        # silently mangles npm's node_modules/.bin (all symlinks) in the round-trip.
+        # Ship source only and let Azure's Oryx build system run a native `npm install`
+        # on the server instead (requires SCM_DO_BUILD_DURING_DEPLOYMENT=true app setting).
+        working-directory: ./backend
+        run: rm -rf node_modules
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -54,9 +62,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
-      - name: Restore exec permissions lost by upload/download-artifact
-        run: chmod -R +x node_modules/.bin
 
       - name: Login to Azure
         uses: azure/login@v2
