@@ -1,4 +1,4 @@
-// Centralized error handler - keep responses consistent across the API
+
 function errorHandler(err, req, res, next) {
   console.error(err);
 
