@@ -1,5 +1,3 @@
-// Prisma schema for AI E-Commerce Automation & Recommendation System
-// Run: npx prisma migrate dev --name init
 
 generator client {
   provider = "prisma-client-js"

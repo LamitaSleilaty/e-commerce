@@ -30,10 +30,7 @@ async function chat(req, res) {
 
   const relevantProducts = await findRelevantProducts(message);
 
-  // Hard gate: never hand the request to the LLM unless we found real catalog matches.
-  // The model doesn't reliably obey "only use this list" as a soft instruction, so when
-  // there's nothing to ground it in, skip the LLM call entirely rather than risk it
-  // answering from its own general knowledge.
+  
   const reply =
     relevantProducts.length === 0
       ? "I can only help with products available in our store, and I couldn't find anything matching that. Could you tell me more about what you're looking for (category, price range, etc.)?"

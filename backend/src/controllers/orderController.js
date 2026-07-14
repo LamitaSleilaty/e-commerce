@@ -21,7 +21,7 @@ async function checkout(req, res) {
   });
   if (cartItems.length === 0) return res.status(400).json({ error: "Cart is empty" });
 
-  // Validate stock before committing
+ 
   for (const item of cartItems) {
     if (item.product.stock < item.quantity) {
       return res.status(400).json({ error: `Insufficient stock for ${item.product.name}` });
@@ -33,7 +33,6 @@ async function checkout(req, res) {
   const shippingFee = subtotal > 100 ? 0 : 9.99;
   const total = Number((subtotal + tax + shippingFee).toFixed(2));
 
-  // Transaction: create order, decrement stock, clear cart
   const order = await prisma.$transaction(async (tx) => {
     const newOrder = await tx.order.create({
       data: {
@@ -72,7 +71,6 @@ async function checkout(req, res) {
     return newOrder;
   });
 
-  // Fire automation workflows (non-blocking)
   n8n.sendOrderConfirmation(order);
   for (const item of order.items) {
     const updated = await prisma.product.findUnique({ where: { id: item.productId } });
@@ -91,7 +89,6 @@ async function listOrders(req, res) {
   res.json({ orders });
 }
 
-// Admin: view every order across all customers
 async function listAllOrders(req, res) {
   const orders = await prisma.order.findMany({
     include: {
@@ -112,7 +109,7 @@ async function getOrder(req, res) {
   res.json({ order });
 }
 
-// Admin: update order status -> triggers shipping notification workflow
+
 async function updateOrderStatus(req, res) {
   const status = z
     .enum(["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"])
