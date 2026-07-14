@@ -43,7 +43,7 @@ jobs:
         # public/ by default -- those have to be copied in manually.
         working-directory: ./frontend
         run: |
-          cp -r public .next/standalone/public
+          if [ -d public ]; then cp -r public .next/standalone/public; fi
           cp -r .next/static .next/standalone/.next/static
 
       - name: Package app as zip (preserves node_modules/.bin symlinks)
