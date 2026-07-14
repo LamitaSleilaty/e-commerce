@@ -40,19 +40,20 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Remove node_modules before packaging
+      - name: Package app as zip (preserves node_modules/.bin symlinks)
         # actions/upload-artifact@v4 drops symlinks and empty directories, which
-        # silently mangles npm's node_modules/.bin (all symlinks) in the round-trip.
-        # Ship source only and let Azure's Oryx build system run a native `npm install`
-        # on the server instead (requires SCM_DO_BUILD_DURING_DEPLOYMENT=true app setting).
+        # mangles node_modules/.bin. Zipping first keeps them intact, and
+        # azure/webapps-deploy accepts a zip package directly. This also lets us
+        # ship node_modules pre-built instead of relying on Azure's Oryx build,
+        # which was hanging indefinitely during deploy.
         working-directory: ./backend
-        run: rm -rf node_modules
+        run: zip -ry ../backend.zip .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: backend
+          path: backend.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -80,5 +81,4 @@ jobs:
         with:
           app-name: 'talamita'
           slot-name: 'Production'
-          package: .
-          
+          package: backend.zip
