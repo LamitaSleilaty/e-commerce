@@ -1,10 +1,6 @@
 const prisma = require("../config/prisma");
 
-/**
- * n8n calls this on a schedule (e.g. every hour) to fetch carts abandoned
- * for more than N hours, so it can send reminder emails.
- * Secure this route with the shared secret in N8N_API_KEY (checked in routes/webhooks.js).
- */
+
 async function getAbandonedCarts(req, res) {
   const hoursAgo = Number(req.query.hours) || 3;
   const cutoff = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
@@ -24,10 +20,7 @@ async function getAbandonedCarts(req, res) {
   res.json({ abandonedCarts: Object.values(byUser) });
 }
 
-/**
- * n8n calls this to fetch products below a stock threshold for its
- * daily low-stock digest, as an alternative to the real-time trigger.
- */
+
 async function getLowStockProducts(req, res) {
   const threshold = Number(req.query.threshold) || 5;
   const products = await prisma.product.findMany({

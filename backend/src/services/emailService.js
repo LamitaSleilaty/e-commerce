@@ -21,12 +21,7 @@ function buildRawMessage({ to, subject, html }) {
   return encodeMessage(messageParts.join("\n"));
 }
 
-/**
- * Sends an email through the Gmail API using the GMAIL_SENDER_EMAIL account,
- * authorized via a one-time OAuth2 grant (see scripts/get-gmail-refresh-token.js).
- * Failures are logged but never thrown — email delivery should never block
- * the calling request (registration, etc.).
- */
+
 async function sendEmail({ to, subject, html }) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_REFRESH_TOKEN) {
     console.warn(`[email] Gmail API not configured, skipping send to ${to}`);

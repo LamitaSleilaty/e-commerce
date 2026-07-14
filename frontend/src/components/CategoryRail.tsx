@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { categoryColor } from "../lib/categoryColors";
 
-// Local Category type to avoid depending on external api typings
+
 type Category = {
   id: string;
   name: string;

@@ -51,10 +51,10 @@ async function getProduct(req, res) {
   });
   if (!product) return res.status(404).json({ error: "Product not found" });
 
-  // Log a "view" event -> feeds the recommendation engine
+ 
   await prisma.browsingEvent.create({
     data: { userId: req.user?.id, productId: product.id, eventType: "view" },
-  }).catch(() => {}); // non-critical, don't fail the request if logging fails
+  }).catch(() => {}); 
 
   res.json({ product });
 }

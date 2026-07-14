@@ -9,8 +9,6 @@ const STOPWORDS = new Set([
   "things", "thing", "stuff",
 ]);
 
-// Maps common shopping vocabulary to this store's actual category names, since
-// product copy rarely uses the exact words a customer searches with.
 const CATEGORY_ALIASES = {
   beauty: ["Beauty"], skincare: ["Beauty"], skin: ["Beauty"], makeup: ["Beauty"],
   cosmetics: ["Beauty"], serum: ["Beauty"], lipstick: ["Beauty"],
@@ -37,7 +35,6 @@ function extractKeywords(message) {
   ].slice(0, 6);
 }
 
-// Cheap singular/plural fallback so "laptops" also matches a product named "Laptop"
 function keywordVariants(kw) {
   return kw.endsWith("s") && kw.length > 3 ? [kw, kw.slice(0, -1)] : [kw, `${kw}s`];
 }
@@ -47,11 +44,7 @@ function extractMaxPrice(message) {
   return match ? parseFloat(match[1]) : null;
 }
 
-/**
- * Finds real products from the catalog relevant to a free-text customer message,
- * so the AI assistant can ground its answers in actual store inventory instead of
- * inventing products or suggesting other retailers.
- */
+
 async function findRelevantProducts(message, { limit = 6 } = {}) {
   const keywords = extractKeywords(message);
   const maxPrice = extractMaxPrice(message);
@@ -101,13 +94,6 @@ async function findRelevantProducts(message, { limit = 6 } = {}) {
   return products;
 }
 
-/**
- * Generates "you may also like" recommendations for a user based on:
- *  - categories of products they've viewed/purchased/favorited
- *  - excluding products already owned or in cart
- * This is a lightweight collaborative/content heuristic. For deeper personalization,
- * feed this same signal data (BrowsingEvent, Review, Favorite) into OpenClaw as context.
- */
 async function getRecommendationsForUser(userId, limit = 10) {
   const events = await prisma.browsingEvent.findMany({
     where: { userId },
@@ -119,7 +105,7 @@ async function getRecommendationsForUser(userId, limit = 10) {
   const categoryIds = [...new Set(events.map((e) => e.product.categoryId))];
 
   if (categoryIds.length === 0) {
-    // Cold start: return best-rated / most-favorited products
+    
     return prisma.product.findMany({
       where: { isActive: true },
       include: { images: true, _count: { select: { favorites: true } } },

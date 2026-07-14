@@ -28,7 +28,7 @@ function VerifyEmailInner() {
         setStatus("error");
         setError(err instanceof Error ? err.message : "Verification failed.");
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [params]);
 
   return (

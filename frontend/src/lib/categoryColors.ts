@@ -1,5 +1,4 @@
-// Deterministic color assignment for category tiles/pills — cycles through
-// the brand accent palette so each category reads distinctly at a glance.
+
 const PALETTE = [
   { bg: "bg-pink", text: "text-paper" },
   { bg: "bg-grape", text: "text-paper" },

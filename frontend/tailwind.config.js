@@ -4,17 +4,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Palette matched to the "Anon" reference template (project_2):
-        // eerie-black / salmon-pink / sandy-brown / cultured / onyx.
+  
         paper: "#FFFFFF",
-        ink: "#212121", // eerie-black
-        pink: "#FF8F9C", // salmon-pink (primary accent)
-        yellow: "#F6A355", // sandy-brown (secondary accent)
-        grape: "#454545", // onyx (dark secondary, replaces old purple)
-        line: "#EDEDED", // cultured (borders / hairlines)
+        ink: "#212121", 
+        pink: "#FF8F9C", 
+        yellow: "#F6A355", 
+        grape: "#454545", 
+        line: "#EDEDED",
         cultured: "#EDEDED",
-        silver: "#999999", // spanish-gray (muted text)
-        green: "#46C389", // ocean-green (success / in stock)
+        silver: "#999999", 
+        green: "#46C389",
       },
       borderRadius: {
         anon: "10px",

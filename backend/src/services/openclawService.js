@@ -4,11 +4,7 @@ const API_URL = process.env.OPENCLAW_API_URL;
 const API_KEY = process.env.OPENCLAW_API_KEY;
 const MODEL = process.env.OPENCLAW_MODEL || "openclaw/shopassist";
 
-/**
- * Thin wrapper around OpenClaw's OpenAI-compatible /v1/chat/completions endpoint.
- * Requests run as a full agent turn on the gateway, which can take 30-90s+ on a
- * local CPU model — callers should not assume sub-second latency.
- */
+
 async function callOpenClaw(messages, { temperature = 0.7, maxTokens = 500 } = {}) {
   const res = await fetch(`${API_URL}/chat/completions`, {
     method: "POST",

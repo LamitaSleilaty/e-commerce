@@ -3,11 +3,11 @@ function errorHandler(err, req, res, next) {
   console.error(err);
 
   if (err.code === "P2002") {
-    // Prisma unique constraint violation
+    
     return res.status(409).json({ error: `Duplicate value for field: ${err.meta?.target}` });
   }
   if (err.code === "P2025") {
-    // Prisma record not found
+    
     return res.status(404).json({ error: "Record not found" });
   }
   if (err.name === "ZodError") {

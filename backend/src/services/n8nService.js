@@ -3,14 +3,7 @@ const fetch = require("node-fetch");
 const BASE_URL = process.env.N8N_WEBHOOK_BASE_URL;
 const API_KEY = process.env.N8N_API_KEY;
 
-/**
- * Triggers an n8n webhook workflow by name.
- * Each workflow in n8n should have a Webhook trigger node named to match `workflowPath`,
- * e.g. "order-confirmation", "abandoned-cart", "low-stock-alert", "shipping-update".
- *
- * This call is fire-and-forget from the API's perspective: failures are logged
- * but never block the primary business transaction (order creation, etc.).
- */
+
 async function triggerWorkflow(workflowPath, payload) {
   if (!BASE_URL) {
     console.warn(`[n8n] N8N_WEBHOOK_BASE_URL not set, skipping workflow "${workflowPath}"`);
@@ -36,7 +29,7 @@ async function triggerWorkflow(workflowPath, payload) {
 
 module.exports = {
   triggerWorkflow,
-  // Convenience wrappers matching the workflows described in the proposal
+
   sendOrderConfirmation: (order) => triggerWorkflow("order-confirmation", order),
   sendShippingUpdate: (order) => triggerWorkflow("shipping-update", order),
   notifyLowStock: (product) => triggerWorkflow("low-stock-alert", product),
