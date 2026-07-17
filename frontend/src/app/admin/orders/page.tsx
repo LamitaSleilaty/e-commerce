@@ -11,13 +11,16 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function load() {
     if (!token) return;
     setLoading(true);
+    setError(null);
     api
       .listAllOrders(token)
       .then(({ orders }) => setOrders(orders))
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load orders."))
       .finally(() => setLoading(false));
   }
 
@@ -26,9 +29,12 @@ export default function AdminOrdersPage() {
   async function handleStatusChange(orderId: string, status: string) {
     if (!token) return;
     setUpdatingId(orderId);
+    setError(null);
     try {
       await api.updateOrderStatus(token, orderId, status);
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update order status.");
     } finally {
       setUpdatingId(null);
     }
@@ -37,6 +43,8 @@ export default function AdminOrdersPage() {
   return (
     <div>
       <h2 className="font-display text-2xl tracking-wide mb-6">ALL ORDERS</h2>
+
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
       {loading ? (
         <p className="text-sm text-ink/50">Loading...</p>

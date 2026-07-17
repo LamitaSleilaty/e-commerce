@@ -27,6 +27,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     try {
       const { favorites } = await api.listFavorites(token);
       setFavorites(favorites);
+    } catch {
+      setFavorites([]);
     } finally {
       setLoading(false);
     }

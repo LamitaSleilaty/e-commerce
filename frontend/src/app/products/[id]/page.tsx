@@ -16,18 +16,31 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   function loadProduct() {
+    setLoading(true);
+    setError(null);
     api
       .getProduct(id, token)
       .then((res) => setProduct(res.product))
-      .catch(() => setProduct(null));
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load product."))
+      .finally(() => setLoading(false));
   }
 
   useEffect(loadProduct, [id, token]);
 
-  if (!product) {
+  if (loading) {
     return <div className="max-w-6xl mx-auto px-6 py-16 text-sm text-ink/50">Loading product...</div>;
+  }
+
+  if (error) {
+    return <div className="max-w-6xl mx-auto px-6 py-16 text-sm text-red-600">{error}</div>;
+  }
+
+  if (!product) {
+    return <div className="max-w-6xl mx-auto px-6 py-16 text-sm text-ink/50">Product not found.</div>;
   }
 
   const specs = product.specifications ? Object.entries(product.specifications) : [];
@@ -39,7 +52,7 @@ export default function ProductDetailPage() {
       return;
     }
     try {
-      await addToCart(product!.id, quantity);
+      await addToCart(product.id, quantity);
       setStatus("Added to cart!");
     } catch {
       setStatus("Could not add to cart.");
@@ -81,6 +94,7 @@ export default function ProductDetailPage() {
               type="number"
               min={1}
               max={product.stock}
+              aria-label={`Quantity for ${product.name}`}
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               className="w-20 border border-line rounded-anon px-4 py-2 text-sm outline-none focus:border-pink"

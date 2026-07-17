@@ -17,14 +17,19 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({ label: "Home", street: "", city: "", state: "", country: "", zipCode: "" });
   const [error, setError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    api.listAddresses(token).then(({ addresses }) => {
-      setAddresses(addresses);
-      if (addresses.length > 0) setSelected(addresses[0].id);
-      else setShowForm(true);
-    });
+    setLoadError(null);
+    api
+      .listAddresses(token)
+      .then(({ addresses }) => {
+        setAddresses(addresses);
+        if (addresses.length > 0) setSelected(addresses[0].id);
+        else setShowForm(true);
+      })
+      .catch((err) => setLoadError(err instanceof Error ? err.message : "Could not load addresses."));
   }, [token]);
 
   async function handleAddAddress(e: React.FormEvent) {
@@ -69,6 +74,7 @@ export default function CheckoutPage() {
 
       <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink/50 mb-3">Shipping address</p>
+        {loadError && <p className="text-xs text-red-600 mb-3">{loadError}</p>}
         {addresses.map((a) => (
           <label key={a.id} className="flex items-start gap-3 border border-line rounded-lg p-3 mb-2 cursor-pointer hover:border-pink">
             <input type="radio" checked={selected === a.id} onChange={() => setSelected(a.id)} className="mt-1 accent-pink" />
@@ -85,14 +91,19 @@ export default function CheckoutPage() {
         ) : (
           <form onSubmit={handleAddAddress} className="space-y-3 mt-4 border border-line rounded-lg p-4">
             {(["label", "street", "city", "state", "country", "zipCode"] as const).map((field) => (
-              <input
-                key={field}
-                required
-                placeholder={field[0].toUpperCase() + field.slice(1)}
-                value={form[field]}
-                onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pink"
-              />
+              <div key={field}>
+                <label htmlFor={`address-${field}`} className="sr-only">
+                  {field[0].toUpperCase() + field.slice(1)}
+                </label>
+                <input
+                  id={`address-${field}`}
+                  required
+                  placeholder={field[0].toUpperCase() + field.slice(1)}
+                  value={form[field]}
+                  onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                  className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pink"
+                />
+              </div>
             ))}
             <button type="submit" className="btn-secondary text-sm">
               Save address

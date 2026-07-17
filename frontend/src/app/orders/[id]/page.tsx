@@ -9,11 +9,20 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
-    api.getOrder(token, id).then(({ order }) => setOrder(order));
+    setError(null);
+    api
+      .getOrder(token, id)
+      .then(({ order }) => setOrder(order))
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load order."));
   }, [token, id]);
+
+  if (error) {
+    return <div className="max-w-3xl mx-auto px-6 py-20 text-sm text-red-600">{error}</div>;
+  }
 
   if (!order) {
     return <div className="max-w-3xl mx-auto px-6 py-20 text-sm text-ink/50">Loading order...</div>;

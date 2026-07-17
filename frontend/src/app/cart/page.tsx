@@ -77,6 +77,7 @@ export default function CartPage() {
                   <input
                     type="number"
                     min={1}
+                    aria-label={`Quantity for ${item.product.name}`}
                     value={item.quantity}
                     onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                     className="w-16 border border-line rounded-anon px-3 py-1 text-sm outline-none focus:border-pink"

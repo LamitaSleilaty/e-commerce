@@ -33,6 +33,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { items, subtotal } = await api.getCart(token);
       setItems(items);
       setSubtotal(subtotal);
+    } catch {
+      setItems([]);
+      setSubtotal(0);
     } finally {
       setLoading(false);
     }

@@ -81,8 +81,9 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Name</label>
+        <label htmlFor="product-name" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Name</label>
         <input
+          id="product-name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -91,8 +92,9 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Description</label>
+        <label htmlFor="product-description" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Description</label>
         <textarea
+          id="product-description"
           required
           rows={3}
           value={description}
@@ -103,8 +105,9 @@ export default function ProductForm({
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Price ($)</label>
+          <label htmlFor="product-price" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Price ($)</label>
           <input
+            id="product-price"
             required
             type="number"
             step="0.01"
@@ -115,8 +118,9 @@ export default function ProductForm({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Stock</label>
+          <label htmlFor="product-stock" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Stock</label>
           <input
+            id="product-stock"
             required
             type="number"
             min={0}
@@ -126,8 +130,9 @@ export default function ProductForm({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">SKU</label>
+          <label htmlFor="product-sku" className="text-xs font-semibold uppercase tracking-wide text-ink/50">SKU</label>
           <input
+            id="product-sku"
             required
             value={sku}
             onChange={(e) => setSku(e.target.value)}
@@ -137,8 +142,9 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Category</label>
+        <label htmlFor="product-category" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Category</label>
         <select
+          id="product-category"
           required
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
@@ -153,8 +159,9 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Image URL</label>
+        <label htmlFor="product-image" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Image URL</label>
         <input
+          id="product-image"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
           placeholder="https://..."
@@ -163,10 +170,11 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">
+        <label htmlFor="product-specs" className="text-xs font-semibold uppercase tracking-wide text-ink/50">
           Specifications (one per line, "key: value")
         </label>
         <textarea
+          id="product-specs"
           rows={4}
           value={specsText}
           onChange={(e) => setSpecsText(e.target.value)}

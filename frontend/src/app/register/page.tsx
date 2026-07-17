@@ -50,8 +50,9 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">First name</label>
+            <label htmlFor="firstName" className="text-xs font-semibold uppercase tracking-wide text-ink/50">First name</label>
             <input
+              id="firstName"
               required
               value={form.firstName}
               onChange={update("firstName")}
@@ -59,8 +60,9 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Last name</label>
+            <label htmlFor="lastName" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Last name</label>
             <input
+              id="lastName"
               required
               value={form.lastName}
               onChange={update("lastName")}
@@ -69,8 +71,9 @@ export default function RegisterPage() {
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Email</label>
+          <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Email</label>
           <input
+            id="email"
             type="email"
             required
             value={form.email}
@@ -79,8 +82,9 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-ink/50">Password (min 8 chars)</label>
+          <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-ink/50">Password (min 8 chars)</label>
           <input
+            id="password"
             type="password"
             required
             minLength={8}

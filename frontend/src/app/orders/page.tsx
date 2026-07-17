@@ -9,15 +9,18 @@ export default function OrdersPage() {
   const { token, user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
       setLoading(false);
       return;
     }
+    setError(null);
     api
       .listOrders(token)
       .then(({ orders }) => setOrders(orders))
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load orders."))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -29,7 +32,9 @@ export default function OrdersPage() {
     <div className="max-w-3xl mx-auto px-6 py-12">
       <h1 className="font-display text-4xl tracking-wide mb-8">ORDERS</h1>
 
-      {loading ? (
+      {error ? (
+        <p className="text-sm text-red-600">{error}</p>
+      ) : loading ? (
         <p className="text-sm text-ink/50">Loading...</p>
       ) : orders.length === 0 ? (
         <p className="text-sm text-ink/50">No orders yet.</p>
