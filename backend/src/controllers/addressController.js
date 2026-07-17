@@ -31,7 +31,10 @@ async function createAddress(req, res) {
 }
 
 async function deleteAddress(req, res) {
-  await prisma.address.delete({ where: { id: req.params.id } });
+  const result = await prisma.address.deleteMany({
+    where: { id: req.params.id, userId: req.user.id },
+  });
+  if (result.count === 0) return res.status(404).json({ error: "Address not found" });
   res.status(204).send();
 }
 

@@ -1,5 +1,6 @@
 const { z } = require("zod");
 const crypto = require("crypto");
+const { Prisma } = require("@prisma/client");
 const prisma = require("../config/prisma");
 const n8n = require("../services/n8nService");
 
@@ -21,19 +22,31 @@ async function checkout(req, res) {
   });
   if (cartItems.length === 0) return res.status(400).json({ error: "Cart is empty" });
 
- 
-  for (const item of cartItems) {
-    if (item.product.stock < item.quantity) {
-      return res.status(400).json({ error: `Insufficient stock for ${item.product.name}` });
-    }
-  }
+  const address = await prisma.address.findFirst({
+    where: { id: addressId, userId: req.user.id },
+  });
+  if (!address) return res.status(400).json({ error: "Address not found" });
 
-  const subtotal = cartItems.reduce((sum, i) => sum + Number(i.product.price) * i.quantity, 0);
-  const tax = Number((subtotal * 0.08).toFixed(2)); // adjust tax rate as needed
-  const shippingFee = subtotal > 100 ? 0 : 9.99;
-  const total = Number((subtotal + tax + shippingFee).toFixed(2));
+  const subtotal = cartItems
+    .reduce((sum, i) => sum.plus(new Prisma.Decimal(i.product.price).times(i.quantity)), new Prisma.Decimal(0))
+    .toDecimalPlaces(2);
+  const tax = subtotal.times(0.08).toDecimalPlaces(2); // adjust tax rate as needed
+  const shippingFee = subtotal.greaterThan(100) ? new Prisma.Decimal(0) : new Prisma.Decimal(9.99);
+  const total = subtotal.plus(tax).plus(shippingFee).toDecimalPlaces(2);
 
   const order = await prisma.$transaction(async (tx) => {
+    for (const item of cartItems) {
+      const result = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
+        data: { stock: { decrement: item.quantity } },
+      });
+      if (result.count === 0) {
+        const err = new Error(`Insufficient stock for ${item.product.name}`);
+        err.status = 400;
+        throw err;
+      }
+    }
+
     const newOrder = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
@@ -58,13 +71,6 @@ async function checkout(req, res) {
         user: { select: { email: true, firstName: true, lastName: true } },
       },
     });
-
-    for (const item of cartItems) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
 
     await tx.cartItem.deleteMany({ where: { userId: req.user.id } });
 

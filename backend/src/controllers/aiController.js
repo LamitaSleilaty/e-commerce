@@ -13,12 +13,13 @@ async function chat(req, res) {
   const userId = req.user?.id;
 
   let conversation = conversationId
-    ? await prisma.aiConversation.findUnique({ where: { id: conversationId }, include: { messages: true } })
+    ? await prisma.aiConversation.findFirst({ where: { id: conversationId, userId }, include: { messages: true } })
     : await prisma.aiConversation.create({ data: { userId }, include: { messages: true } });
+
+  if (!conversation) return res.status(404).json({ error: "Conversation not found" });
 
   const history = (conversation.messages || []).map((m) => ({ role: m.role, content: m.content }));
 
-  // Pull lightweight user context (recent categories) to personalize responses
   const recent = userId
     ? await prisma.browsingEvent.findMany({
         where: { userId },

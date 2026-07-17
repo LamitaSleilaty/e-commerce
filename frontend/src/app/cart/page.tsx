@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../../context/CartContext";
@@ -8,6 +9,27 @@ import { useAuth } from "../../context/AuthContext";
 export default function CartPage() {
   const { user } = useAuth();
   const { items, subtotal, updateItem, removeItem, loading } = useCart();
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleQuantityChange(itemId: string, value: string) {
+    const quantity = Number(value);
+    if (!Number.isInteger(quantity) || quantity < 1) return;
+    setError(null);
+    try {
+      await updateItem(itemId, quantity);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update quantity");
+    }
+  }
+
+  async function handleRemove(itemId: string) {
+    setError(null);
+    try {
+      await removeItem(itemId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove item");
+    }
+  }
 
   if (!user) {
     return (
@@ -22,6 +44,12 @@ export default function CartPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <h1 className="font-display text-4xl tracking-wide mb-8">CART</h1>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-anon px-4 py-2 mb-4">
+          {error}
+        </p>
+      )}
 
       {loading ? (
         <p className="text-sm text-ink/50">Loading...</p>
@@ -50,11 +78,11 @@ export default function CartPage() {
                     type="number"
                     min={1}
                     value={item.quantity}
-                    onChange={(e) => updateItem(item.id, Number(e.target.value))}
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                     className="w-16 border border-line rounded-anon px-3 py-1 text-sm outline-none focus:border-pink"
                   />
                   <button
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => handleRemove(item.id)}
                     className="text-xs text-ink/40 hover:text-pink"
                   >
                     Remove

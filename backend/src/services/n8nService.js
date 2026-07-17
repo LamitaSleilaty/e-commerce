@@ -18,6 +18,7 @@ async function triggerWorkflow(workflowPath, payload) {
         ...(API_KEY && { "X-N8N-Signature": API_KEY }),
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       console.error(`[n8n] Workflow "${workflowPath}" responded with status ${res.status}`);

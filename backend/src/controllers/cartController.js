@@ -1,4 +1,5 @@
 const { z } = require("zod");
+const { Prisma } = require("@prisma/client");
 const prisma = require("../config/prisma");
 
 const addItemSchema = z.object({
@@ -11,8 +12,10 @@ async function getCart(req, res) {
     where: { userId: req.user.id },
     include: { product: { include: { images: true } } },
   });
-  const subtotal = items.reduce((sum, i) => sum + Number(i.product.price) * i.quantity, 0);
-  res.json({ items, subtotal });
+  const subtotal = items
+    .reduce((sum, i) => sum.plus(new Prisma.Decimal(i.product.price).times(i.quantity)), new Prisma.Decimal(0))
+    .toDecimalPlaces(2);
+  res.json({ items, subtotal: subtotal.toNumber() });
 }
 
 async function addItem(req, res) {
@@ -20,7 +23,12 @@ async function addItem(req, res) {
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) return res.status(404).json({ error: "Product not found" });
-  if (product.stock < quantity) return res.status(400).json({ error: "Insufficient stock" });
+
+  const existing = await prisma.cartItem.findUnique({
+    where: { userId_productId: { userId: req.user.id, productId } },
+  });
+  const requestedTotal = (existing?.quantity ?? 0) + quantity;
+  if (requestedTotal > product.stock) return res.status(400).json({ error: "Insufficient stock" });
 
   const item = await prisma.cartItem.upsert({
     where: { userId_productId: { userId: req.user.id, productId } },
@@ -37,15 +45,28 @@ async function addItem(req, res) {
 
 async function updateItem(req, res) {
   const quantity = z.number().int().positive().parse(req.body.quantity);
+
+  const cartItem = await prisma.cartItem.findFirst({
+    where: { id: req.params.itemId, userId: req.user.id },
+    include: { product: true },
+  });
+  if (!cartItem) return res.status(404).json({ error: "Cart item not found" });
+  if (quantity > cartItem.product.stock) {
+    return res.status(400).json({ error: "Insufficient stock" });
+  }
+
   const item = await prisma.cartItem.update({
-    where: { id: req.params.itemId },
+    where: { id: cartItem.id },
     data: { quantity },
   });
   res.json({ item });
 }
 
 async function removeItem(req, res) {
-  await prisma.cartItem.delete({ where: { id: req.params.itemId } });
+  const result = await prisma.cartItem.deleteMany({
+    where: { id: req.params.itemId, userId: req.user.id },
+  });
+  if (result.count === 0) return res.status(404).json({ error: "Cart item not found" });
   res.status(204).send();
 }
 

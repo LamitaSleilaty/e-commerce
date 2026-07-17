@@ -6,18 +6,32 @@ const MODEL = process.env.OPENCLAW_MODEL || "openclaw/shopassist";
 
 
 async function callOpenClaw(messages, { temperature = 0.7, maxTokens = 500 } = {}) {
-  const res = await fetch(`${API_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({ model: MODEL, messages, temperature, max_tokens: maxTokens }),
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({ model: MODEL, messages, temperature, max_tokens: maxTokens }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (err) {
+    const timeoutErr = new Error(
+      err.name === "TimeoutError" || err.name === "AbortError"
+        ? "OpenClaw API timed out"
+        : `OpenClaw API request failed: ${err.message}`
+    );
+    timeoutErr.status = 502;
+    throw timeoutErr;
+  }
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`OpenClaw API error (${res.status}): ${text}`);
+    const err = new Error(`OpenClaw API error (${res.status}): ${text}`);
+    err.status = 502;
+    throw err;
   }
 
   const data = await res.json();

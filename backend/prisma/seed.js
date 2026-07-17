@@ -67,12 +67,18 @@ const PRODUCTS = [
 ];
 
 async function main() {
-  const adminPassword = await bcrypt.hash("Admin123!", 10);
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPasswordRaw = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPasswordRaw) {
+    throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment before seeding.");
+  }
+
+  const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
   await prisma.user.upsert({
-    where: { email: "admin@shop.com" },
-    update: { emailVerified: true },
+    where: { email: adminEmail },
+    update: { password: adminPassword, emailVerified: true },
     create: {
-      email: "admin@shop.com",
+      email: adminEmail,
       password: adminPassword,
       firstName: "Store",
       lastName: "Admin",
@@ -110,7 +116,7 @@ async function main() {
   }
 
   console.log(`✅ Seed complete: ${CATEGORIES.length} categories, ${PRODUCTS.length} products.`);
-  console.log("   Admin login: admin@shop.com / Admin123!");
+  console.log(`   Admin login: ${adminEmail} (password set from ADMIN_PASSWORD)`);
 }
 
 main()
