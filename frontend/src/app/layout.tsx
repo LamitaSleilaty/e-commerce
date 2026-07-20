@@ -15,7 +15,7 @@ const display = Poppins({ subsets: ["latin"], variable: "--font-display", weight
 const body = Poppins({ subsets: ["latin"], variable: "--font-body", weight: ["300", "400", "500", "600"] });
 
 export const metadata: Metadata = {
-  title: "MODA — everything, everyday",
+  title: "TALAMITA — everything, everyday",
   description: "AI-assisted shopping across fashion, beauty, home, tech and more.",
 };
 
