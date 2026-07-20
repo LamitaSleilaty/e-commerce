@@ -45,6 +45,21 @@ function extractMaxPrice(message) {
 }
 
 
+function scoreProduct(product, keywords, aliasedCategories) {
+  const name = product.name.toLowerCase();
+  const description = (product.description || "").toLowerCase();
+  const categoryName = product.category?.name?.toLowerCase() ?? "";
+
+  let score = 0;
+  for (const kw of keywords) {
+    const variants = keywordVariants(kw);
+    if (variants.some((v) => name.includes(v))) score += 3;
+    else if (variants.some((v) => description.includes(v))) score += 1;
+  }
+  if (aliasedCategories.some((c) => c.toLowerCase() === categoryName)) score += 2;
+  return score;
+}
+
 async function findRelevantProducts(message, { limit = 6 } = {}) {
   const keywords = extractKeywords(message);
   const maxPrice = extractMaxPrice(message);
@@ -75,12 +90,21 @@ async function findRelevantProducts(message, { limit = 6 } = {}) {
     category: { select: { name: true } },
   };
 
+  const hasRelevanceQuery = keywords.length > 0 || aliasedCategories.length > 0;
   let products = await prisma.product.findMany({
     where,
     select,
-    take: limit,
-    orderBy: keywords.length > 0 ? undefined : { createdAt: "desc" },
+    take: hasRelevanceQuery ? Math.max(limit * 5, 30) : limit,
+    orderBy: hasRelevanceQuery ? undefined : { createdAt: "desc" },
   });
+
+  if (hasRelevanceQuery) {
+    products = products
+      .map((product) => ({ product, score: scoreProduct(product, keywords, aliasedCategories) }))
+      .sort((a, b) => b.score - a.score)
+      .map(({ product }) => product)
+      .slice(0, limit);
+  }
 
   if (products.length === 0 && maxPrice) {
     products = await prisma.product.findMany({

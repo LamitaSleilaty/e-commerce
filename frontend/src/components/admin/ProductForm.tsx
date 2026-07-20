@@ -23,7 +23,7 @@ export default function ProductForm({
 
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
-  const [price, setPrice] = useState(initial ? Number(initial.price) : 0);
+  const [price, setPrice] = useState(initial?.price ?? 0);
   const [stock, setStock] = useState(initial?.stock ?? 0);
   const [sku, setSku] = useState(initial?.sku || "");
   const [categoryId, setCategoryId] = useState(initial?.categoryId || categories[0]?.id || "");
@@ -55,7 +55,7 @@ export default function ProductForm({
       name,
       slug: slugify(name),
       description,
-      price: Number(price),
+      price,
       stock: Number(stock),
       sku,
       categoryId,

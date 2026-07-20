@@ -1,28 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { api, Order } from "../../lib/api";
+import { useAsync } from "../../hooks/useAsync";
+import { formatPrice } from "../../lib/format";
 
 export default function OrdersPage() {
   const { token, user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    setError(null);
-    api
-      .listOrders(token)
-      .then(({ orders }) => setOrders(orders))
-      .catch((err) => setError(err instanceof Error ? err.message : "Could not load orders."))
-      .finally(() => setLoading(false));
-  }, [token]);
+  const {
+    data: orders,
+    loading,
+    error,
+  } = useAsync<Order[]>(() => (token ? api.listOrders(token).then((r) => r.orders) : Promise.resolve([])), [token]);
 
   if (!user) {
     return <div className="max-w-2xl mx-auto px-6 py-20 text-sm text-ink/60">Log in to view orders.</div>;
@@ -36,7 +26,7 @@ export default function OrdersPage() {
         <p className="text-sm text-red-600">{error}</p>
       ) : loading ? (
         <p className="text-sm text-ink/50">Loading...</p>
-      ) : orders.length === 0 ? (
+      ) : !orders || orders.length === 0 ? (
         <p className="text-sm text-ink/50">No orders yet.</p>
       ) : (
         <div className="divide-y divide-line border-y border-line">
@@ -47,7 +37,7 @@ export default function OrdersPage() {
                 <p className="text-xs text-ink/50">{new Date(o.createdAt).toLocaleDateString()}</p>
               </div>
               <span className="chip">{o.status}</span>
-              <p className="font-semibold">${Number(o.total).toFixed(2)}</p>
+              <p className="font-semibold">{formatPrice(o.total)}</p>
             </Link>
           ))}
         </div>

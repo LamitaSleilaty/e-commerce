@@ -41,7 +41,7 @@ export type Product = {
   slug: string;
   description: string;
   aiDescription: string | null;
-  price: string;
+  price: number;
   stock: number;
   sku: string;
   specifications: Record<string, string> | null;
@@ -62,7 +62,7 @@ export type OrderItem = {
   id: string;
   productId: string;
   quantity: number;
-  unitPrice: string;
+  unitPrice: number;
   product: Product;
 };
 
@@ -71,10 +71,10 @@ export type Order = {
   orderNumber: string;
   status: string;
   paymentStatus: string;
-  subtotal: string;
-  tax: string;
-  shippingFee: string;
-  total: string;
+  subtotal: number;
+  tax: number;
+  shippingFee: number;
+  total: number;
   createdAt: string;
   items: OrderItem[];
   user?: { id: string; email: string; firstName: string; lastName: string };
@@ -100,6 +100,34 @@ export type ProductInput = {
   specifications?: Record<string, string>;
   images?: { url: string; altText?: string }[];
 };
+
+function mapProduct(p: any): Product {
+  return { ...p, price: Number(p.price) };
+}
+
+function mapOrderItem(oi: any): OrderItem {
+  return { ...oi, unitPrice: Number(oi.unitPrice), product: mapProduct(oi.product) };
+}
+
+function mapOrder(o: any): Order {
+  return {
+    ...o,
+    subtotal: Number(o.subtotal),
+    tax: Number(o.tax),
+    shippingFee: Number(o.shippingFee),
+    total: Number(o.total),
+    items: (o.items || []).map(mapOrderItem),
+  };
+}
+
+function mapCartItem(ci: any): CartItem {
+
+  return { ...ci, product: ci.product ? mapProduct(ci.product) : ci.product };
+}
+
+function mapFavorite(f: any): Favorite {
+  return { ...f, product: f.product ? mapProduct(f.product) : f.product };
+}
 
 class ApiError extends Error {
   status: number;
@@ -149,26 +177,41 @@ export const api = {
     request<{ category: Category }>("/categories", { method: "POST", body: JSON.stringify(data) }, token),
 
   // Products
-  listProducts: (params?: { search?: string; category?: string; limit?: number }) => {
+  listProducts: async (params?: { search?: string; category?: string; limit?: number }) => {
     const clean = Object.fromEntries(
       Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== "")
     ) as Record<string, string>;
     const qs = new URLSearchParams(clean).toString();
-    return request<{ items: Product[]; total: number }>(`/products${qs ? `?${qs}` : ""}`);
+    const { items, total } = await request<{ items: any[]; total: number }>(`/products${qs ? `?${qs}` : ""}`);
+    return { items: items.map(mapProduct), total };
   },
-  getProduct: (id: string, token?: string | null) => request<{ product: Product }>(`/products/${id}`, {}, token),
-  createProduct: (token: string, data: ProductInput) =>
-    request<{ product: Product }>("/products", { method: "POST", body: JSON.stringify(data) }, token),
-  updateProduct: (token: string, id: string, data: Partial<ProductInput>) =>
-    request<{ product: Product }>(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }, token),
+  getProduct: async (id: string, token?: string | null) => {
+    const { product } = await request<{ product: any }>(`/products/${id}`, {}, token);
+    return { product: mapProduct(product) };
+  },
+  createProduct: async (token: string, data: ProductInput) => {
+    const { product } = await request<{ product: any }>("/products", { method: "POST", body: JSON.stringify(data) }, token);
+    return { product: mapProduct(product) };
+  },
+  updateProduct: async (token: string, id: string, data: Partial<ProductInput>) => {
+    const { product } = await request<{ product: any }>(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }, token);
+    return { product: mapProduct(product) };
+  },
   deleteProduct: (token: string, id: string) => request<void>(`/products/${id}`, { method: "DELETE" }, token),
 
   // Cart
-  getCart: (token: string) => request<{ items: CartItem[]; subtotal: number }>("/cart", {}, token),
-  addToCart: (token: string, productId: string, quantity = 1) =>
-    request<{ item: CartItem }>("/cart/items", { method: "POST", body: JSON.stringify({ productId, quantity }) }, token),
-  updateCartItem: (token: string, itemId: string, quantity: number) =>
-    request<{ item: CartItem }>(`/cart/items/${itemId}`, { method: "PUT", body: JSON.stringify({ quantity }) }, token),
+  getCart: async (token: string) => {
+    const { items, subtotal } = await request<{ items: any[]; subtotal: number }>("/cart", {}, token);
+    return { items: items.map(mapCartItem), subtotal };
+  },
+  addToCart: async (token: string, productId: string, quantity = 1) => {
+    const { item } = await request<{ item: any }>("/cart/items", { method: "POST", body: JSON.stringify({ productId, quantity }) }, token);
+    return { item: mapCartItem(item) };
+  },
+  updateCartItem: async (token: string, itemId: string, quantity: number) => {
+    const { item } = await request<{ item: any }>(`/cart/items/${itemId}`, { method: "PUT", body: JSON.stringify({ quantity }) }, token);
+    return { item: mapCartItem(item) };
+  },
   removeCartItem: (token: string, itemId: string) =>
     request<void>(`/cart/items/${itemId}`, { method: "DELETE" }, token),
 
@@ -178,13 +221,26 @@ export const api = {
     request<{ address: Address }>("/addresses", { method: "POST", body: JSON.stringify(data) }, token),
 
   // Orders
-  checkout: (token: string, addressId: string, paymentMethod = "card") =>
-    request<{ order: Order }>("/orders/checkout", { method: "POST", body: JSON.stringify({ addressId, paymentMethod }) }, token),
-  listOrders: (token: string) => request<{ orders: Order[] }>("/orders", {}, token),
-  listAllOrders: (token: string) => request<{ orders: Order[] }>("/orders/admin/all", {}, token),
-  getOrder: (token: string, id: string) => request<{ order: Order }>(`/orders/${id}`, {}, token),
-  updateOrderStatus: (token: string, id: string, status: string) =>
-    request<{ order: Order }>(`/orders/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }, token),
+  checkout: async (token: string, addressId: string, paymentMethod = "card") => {
+    const { order } = await request<{ order: any }>("/orders/checkout", { method: "POST", body: JSON.stringify({ addressId, paymentMethod }) }, token);
+    return { order: mapOrder(order) };
+  },
+  listOrders: async (token: string) => {
+    const { orders } = await request<{ orders: any[] }>("/orders", {}, token);
+    return { orders: orders.map(mapOrder) };
+  },
+  listAllOrders: async (token: string) => {
+    const { orders } = await request<{ orders: any[] }>("/orders/admin/all", {}, token);
+    return { orders: orders.map(mapOrder) };
+  },
+  getOrder: async (token: string, id: string) => {
+    const { order } = await request<{ order: any }>(`/orders/${id}`, {}, token);
+    return { order: mapOrder(order) };
+  },
+  updateOrderStatus: async (token: string, id: string, status: string) => {
+    const { order } = await request<{ order: any }>(`/orders/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }, token);
+    return { order: mapOrder(order) };
+  },
 
   // Reviews
   createReview: (token: string, productId: string, data: { rating: number; comment?: string }) =>
@@ -194,9 +250,14 @@ export const api = {
   deleteReview: (token: string, id: string) => request<void>(`/reviews/${id}`, { method: "DELETE" }, token),
 
   // Favorites
-  listFavorites: (token: string) => request<{ favorites: Favorite[] }>("/favorites", {}, token),
-  addFavorite: (token: string, productId: string) =>
-    request<{ favorite: Favorite }>("/favorites", { method: "POST", body: JSON.stringify({ productId }) }, token),
+  listFavorites: async (token: string) => {
+    const { favorites } = await request<{ favorites: any[] }>("/favorites", {}, token);
+    return { favorites: favorites.map(mapFavorite) };
+  },
+  addFavorite: async (token: string, productId: string) => {
+    const { favorite } = await request<{ favorite: any }>("/favorites", { method: "POST", body: JSON.stringify({ productId }) }, token);
+    return { favorite: mapFavorite(favorite) };
+  },
   removeFavorite: (token: string, productId: string) =>
     request<void>(`/favorites/${productId}`, { method: "DELETE" }, token),
 

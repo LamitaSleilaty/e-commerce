@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { formatPrice } from "../../lib/format";
 
 export default function CartPage() {
   const { user } = useAuth();
@@ -72,7 +73,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{item.product.name}</p>
-                    <p className="text-sm text-pink font-semibold">${Number(item.product.price).toFixed(2)}</p>
+                    <p className="text-sm text-pink font-semibold">{formatPrice(item.product.price)}</p>
                   </div>
                   <input
                     type="number"
@@ -95,7 +96,7 @@ export default function CartPage() {
 
           <div className="flex justify-between items-center mt-8">
             <p className="text-sm text-ink/50">Subtotal</p>
-            <p className="text-2xl font-semibold">${subtotal.toFixed(2)}</p>
+            <p className="text-2xl font-semibold">{formatPrice(subtotal)}</p>
           </div>
 
           <Link href="/checkout" className="btn-primary w-full mt-6">

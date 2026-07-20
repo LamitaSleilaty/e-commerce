@@ -1,44 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { api, Order } from "../../../lib/api";
+import { useAsync } from "../../../hooks/useAsync";
+import { formatPrice } from "../../../lib/format";
 
 const STATUSES = ["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"];
 
 export default function AdminOrdersPage() {
   const { token } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
-  function load() {
-    if (!token) return;
-    setLoading(true);
-    setError(null);
-    api
-      .listAllOrders(token)
-      .then(({ orders }) => setOrders(orders))
-      .catch((err) => setError(err instanceof Error ? err.message : "Could not load orders."))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(load, [token]);
+  const {
+    data: orders,
+    setData: setOrders,
+    loading,
+    error: loadError,
+  } = useAsync<Order[]>(() => (token ? api.listAllOrders(token).then((r) => r.orders) : Promise.resolve([])), [token]);
 
   async function handleStatusChange(orderId: string, status: string) {
     if (!token) return;
     setUpdatingId(orderId);
-    setError(null);
+    setUpdateError(null);
     try {
       await api.updateOrderStatus(token, orderId, status);
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+      setOrders((prev) => (prev ? prev.map((o) => (o.id === orderId ? { ...o, status } : o)) : prev));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update order status.");
+      setUpdateError(err instanceof Error ? err.message : "Could not update order status.");
     } finally {
       setUpdatingId(null);
     }
   }
+
+  const error = loadError || updateError;
 
   return (
     <div>
@@ -48,7 +44,7 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <p className="text-sm text-ink/50">Loading...</p>
-      ) : orders.length === 0 ? (
+      ) : !orders || orders.length === 0 ? (
         <p className="text-sm text-ink/50">No orders yet.</p>
       ) : (
         <div className="divide-y divide-line border-y border-line">
@@ -61,7 +57,7 @@ export default function AdminOrdersPage() {
                 </p>
               </div>
               <p className="text-xs text-ink/50 w-28">{new Date(o.createdAt).toLocaleDateString()}</p>
-              <p className="font-semibold w-20">${Number(o.total).toFixed(2)}</p>
+              <p className="font-semibold w-20">{formatPrice(o.total)}</p>
               <select
                 value={o.status}
                 disabled={updatingId === o.id}

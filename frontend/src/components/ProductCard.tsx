@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Product } from "../lib/api";
+import { formatPrice } from "../lib/format";
 import FavoriteButton from "./FavoriteButton";
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -39,7 +40,7 @@ export default function ProductCard({ product }: { product: Product }) {
           {product.name}
         </h3>
         <div className="flex items-center gap-2 mt-1.5">
-          <span className="font-semibold text-ink">${Number(product.price).toFixed(2)}</span>
+          <span className="font-semibold text-ink">{formatPrice(product.price)}</span>
         </div>
         {isLowStock && <p className="text-xs text-pink font-medium mt-1">Only {product.stock} left</p>}
       </div>

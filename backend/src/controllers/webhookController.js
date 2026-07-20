@@ -1,9 +1,9 @@
 const prisma = require("../config/prisma");
-
+const { ABANDONED_CART_HOURS, ABANDONED_CART_WINDOW_HOURS, LOW_STOCK_THRESHOLD } = require("../config/business");
 
 async function getAbandonedCarts(req, res) {
-  const hoursAgo = Number(req.query.hours) || 3;
-  const windowHours = Number(req.query.windowHours) || 24;
+  const hoursAgo = Number(req.query.hours) || ABANDONED_CART_HOURS;
+  const windowHours = Number(req.query.windowHours) || ABANDONED_CART_WINDOW_HOURS;
   const cutoff = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
   const floor = new Date(Date.now() - (hoursAgo + windowHours) * 60 * 60 * 1000);
 
@@ -23,7 +23,7 @@ async function getAbandonedCarts(req, res) {
 
 
 async function getLowStockProducts(req, res) {
-  const threshold = Number(req.query.threshold) || 5;
+  const threshold = Number(req.query.threshold) || LOW_STOCK_THRESHOLD;
   const products = await prisma.product.findMany({
     where: { isActive: true, stock: { lte: threshold } },
   });

@@ -8,13 +8,17 @@ function encodeMessage(message) {
     .replace(/=+$/, "");
 }
 
+function stripHeaderInjection(value) {
+  return String(value).replace(/[\r\n]+/g, " ").trim();
+}
+
 function buildRawMessage({ to, subject, html }) {
   const messageParts = [
     `From: ${process.env.GMAIL_SENDER_EMAIL}`,
-    `To: ${to}`,
+    `To: ${stripHeaderInjection(to)}`,
     "Content-Type: text/html; charset=utf-8",
     "MIME-Version: 1.0",
-    `Subject: ${subject}`,
+    `Subject: ${stripHeaderInjection(subject)}`,
     "",
     html,
   ];

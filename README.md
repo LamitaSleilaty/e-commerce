@@ -43,7 +43,7 @@ Fill in `.env`:
 | `PORT` | defaults to `4000` |
 | `CLIENT_URL` | frontend origin, e.g. `http://localhost:3000` — required for CORS |
 | `JWT_SECRET` | any long random string |
-| `JWT_EXPIRES_IN` | e.g. `7d` |
+| `JWT_EXPIRES_IN` | e.g. `24h` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | credentials the seed script creates the admin account with |
 | `OPENCLAW_API_URL` / `OPENCLAW_API_KEY` / `OPENCLAW_MODEL` | your OpenClaw (or any OpenAI-compatible) chat completions endpoint |
 | `N8N_WEBHOOK_BASE_URL` / `N8N_API_KEY` | your n8n instance's webhook base URL and shared secret |

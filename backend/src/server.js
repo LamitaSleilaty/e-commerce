@@ -21,8 +21,25 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+if (!process.env.CLIENT_URL) {
+  throw new Error("CLIENT_URL environment variable is required");
+}
+
+const REDACTED_QUERY_PARAMS = ["token"];
+
+morgan.token("url", (req) => {
+  const [path, query] = req.originalUrl.split("?");
+  if (!query) return path;
+
+  const params = new URLSearchParams(query);
+  for (const key of REDACTED_QUERY_PARAMS) {
+    if (params.has(key)) params.set(key, "REDACTED");
+  }
+  return `${path}?${params.toString()}`;
+});
+
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || "*", credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 

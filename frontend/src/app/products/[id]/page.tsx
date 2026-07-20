@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { api, Product } from "../../../lib/api";
 import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/AuthContext";
+import { useAsync } from "../../../hooks/useAsync";
+import { formatPrice } from "../../../lib/format";
 import FavoriteButton from "../../../components/FavoriteButton";
 import ReviewSection from "../../../components/ReviewSection";
 
@@ -13,23 +15,15 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
   const { addToCart } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  function loadProduct() {
-    setLoading(true);
-    setError(null);
-    api
-      .getProduct(id, token)
-      .then((res) => setProduct(res.product))
-      .catch((err) => setError(err instanceof Error ? err.message : "Could not load product."))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(loadProduct, [id, token]);
+  const {
+    data: product,
+    loading,
+    error,
+    refetch,
+  } = useAsync<Product>(() => api.getProduct(id, token).then((r) => r.product), [id, token]);
 
   if (loading) {
     return <div className="max-w-6xl mx-auto px-6 py-16 text-sm text-ink/50">Loading product...</div>;
@@ -51,6 +45,7 @@ export default function ProductDetailPage() {
       setStatus("Log in to add items to your cart.");
       return;
     }
+    if (!product) return;
     try {
       await addToCart(product.id, quantity);
       setStatus("Added to cart!");
@@ -76,7 +71,7 @@ export default function ProductDetailPage() {
             <FavoriteButton productId={product.id} className="w-9 h-9 border border-line" />
           </div>
           <h1 className="font-display text-4xl tracking-wide mt-3">{product.name}</h1>
-          <p className="text-2xl font-semibold mt-3">${Number(product.price).toFixed(2)}</p>
+          <p className="text-2xl font-semibold mt-3">{formatPrice(product.price)}</p>
           <p className="text-ink/70 mt-4">{product.description}</p>
 
           {specs.length > 0 && (
@@ -107,7 +102,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <ReviewSection productId={product.id} reviews={product.reviews ?? []} onChange={loadProduct} />
+      <ReviewSection productId={product.id} reviews={product.reviews ?? []} onChange={refetch} />
     </div>
   );
 }

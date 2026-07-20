@@ -1,6 +1,15 @@
 const { z } = require("zod");
 const prisma = require("../config/prisma");
 
+const listQuerySchema = z.object({
+  category: z.string().optional(),
+  search: z.string().optional(),
+  minPrice: z.coerce.number().nonnegative().optional(),
+  maxPrice: z.coerce.number().nonnegative().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 const productSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
@@ -14,7 +23,7 @@ const productSchema = z.object({
 });
 
 async function listProducts(req, res) {
-  const { category, search, minPrice, maxPrice, page = 1, limit = 20 } = req.query;
+  const { category, search, minPrice, maxPrice, page, limit } = listQuerySchema.parse(req.query);
 
   const where = {
     isActive: true,
@@ -25,8 +34,8 @@ async function listProducts(req, res) {
         { description: { contains: search, mode: "insensitive" } },
       ],
     }),
-    ...(minPrice || maxPrice
-      ? { price: { ...(minPrice && { gte: Number(minPrice) }), ...(maxPrice && { lte: Number(maxPrice) }) } }
+    ...(minPrice !== undefined || maxPrice !== undefined
+      ? { price: { ...(minPrice !== undefined && { gte: minPrice }), ...(maxPrice !== undefined && { lte: maxPrice }) } }
       : {}),
   };
 
@@ -34,14 +43,14 @@ async function listProducts(req, res) {
     prisma.product.findMany({
       where,
       include: { images: true, category: true },
-      skip: (Number(page) - 1) * Number(limit),
-      take: Number(limit),
+      skip: (page - 1) * limit,
+      take: limit,
       orderBy: { createdAt: "desc" },
     }),
     prisma.product.count({ where }),
   ]);
 
-  res.json({ items, total, page: Number(page), limit: Number(limit) });
+  res.json({ items, total, page, limit });
 }
 
 async function getProduct(req, res) {

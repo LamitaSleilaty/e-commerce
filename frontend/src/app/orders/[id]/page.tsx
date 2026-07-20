@@ -1,30 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { api, Order } from "../../../lib/api";
+import { useAsync } from "../../../hooks/useAsync";
+import { formatPrice } from "../../../lib/format";
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!token) return;
-    setError(null);
-    api
-      .getOrder(token, id)
-      .then(({ order }) => setOrder(order))
-      .catch((err) => setError(err instanceof Error ? err.message : "Could not load order."));
-  }, [token, id]);
+  const { data: order, loading, error } = useAsync<Order | null>(
+    () => (token ? api.getOrder(token, id).then((r) => r.order) : new Promise(() => {})),
+    [token, id]
+  );
 
   if (error) {
     return <div className="max-w-3xl mx-auto px-6 py-20 text-sm text-red-600">{error}</div>;
   }
 
-  if (!order) {
+  if (loading || !order) {
     return <div className="max-w-3xl mx-auto px-6 py-20 text-sm text-ink/50">Loading order...</div>;
   }
 
@@ -42,7 +36,7 @@ export default function OrderDetailPage() {
             <span>
               {item.product.name} × {item.quantity}
             </span>
-            <span className="font-medium">${(Number(item.unitPrice) * item.quantity).toFixed(2)}</span>
+            <span className="font-medium">{formatPrice(item.unitPrice * item.quantity)}</span>
           </div>
         ))}
       </div>
@@ -50,19 +44,19 @@ export default function OrderDetailPage() {
       <div className="mt-6 space-y-1 text-sm">
         <div className="flex justify-between text-ink/60">
           <span>Subtotal</span>
-          <span>${Number(order.subtotal).toFixed(2)}</span>
+          <span>{formatPrice(order.subtotal)}</span>
         </div>
         <div className="flex justify-between text-ink/60">
           <span>Tax</span>
-          <span>${Number(order.tax).toFixed(2)}</span>
+          <span>{formatPrice(order.tax)}</span>
         </div>
         <div className="flex justify-between text-ink/60">
           <span>Shipping</span>
-          <span>${Number(order.shippingFee).toFixed(2)}</span>
+          <span>{formatPrice(order.shippingFee)}</span>
         </div>
         <div className="flex justify-between text-lg font-semibold text-pink pt-2 border-t border-line mt-2">
           <span>Total</span>
-          <span>${Number(order.total).toFixed(2)}</span>
+          <span>{formatPrice(order.total)}</span>
         </div>
       </div>
     </div>

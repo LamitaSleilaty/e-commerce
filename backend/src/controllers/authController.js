@@ -28,7 +28,7 @@ function signToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    { expiresIn: process.env.JWT_EXPIRES_IN || "24h" }
   );
 }
 
@@ -57,11 +57,16 @@ function sendVerificationEmail(user, token) {
   });
 }
 
+const REGISTER_MESSAGE =
+  "Registration received. Check your email to verify your account before logging in.";
+
 async function register(req, res) {
   const data = registerSchema.parse(req.body);
 
   const existing = await prisma.user.findUnique({ where: { email: data.email } });
-  if (existing) return res.status(409).json({ error: "Email already registered" });
+  if (existing) {
+    return res.status(201).json({ message: REGISTER_MESSAGE });
+  }
 
   const hashed = await bcrypt.hash(data.password, 10);
   const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -76,9 +81,7 @@ async function register(req, res) {
 
   sendVerificationEmail(user, verificationToken);
 
-  res.status(201).json({
-    message: "Registration successful. Check your email to verify your account before logging in.",
-  });
+  res.status(201).json({ message: REGISTER_MESSAGE });
 }
 
 async function login(req, res) {
